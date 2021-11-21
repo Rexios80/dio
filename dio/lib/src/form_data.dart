@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 
+import 'package:http_parser/http_parser.dart';
+
 import 'multipart_file.dart';
 import 'options.dart';
 import 'utils.dart';
@@ -24,6 +26,11 @@ class FormData {
   /// The form fields to send for this request.
   final fields = <MapEntry<String, String>>[];
 
+  /// The content-types of individual form fields
+  /// 
+  /// Map of field name to content-type
+  final Map<String, MediaType> fieldContentTypes;
+
   /// The [files].
   final files = <MapEntry<String, MultipartFile>>[];
 
@@ -31,15 +38,16 @@ class FormData {
   bool get isFinalized => _isFinalized;
   bool _isFinalized = false;
 
-  FormData() {
+  FormData() : fieldContentTypes = {} {
     _init();
   }
 
   /// Create FormData instance with a Map.
   FormData.fromMap(
-    Map<String, dynamic> map, [
+    Map<String, dynamic> map, {
     ListFormat collectionFormat = ListFormat.multi,
-  ]) {
+    this.fieldContentTypes = const {},
+  }) {
     _init();
     encodeMap(
       map,
@@ -69,7 +77,10 @@ class FormData {
   String _headerForField(String name, String value) {
     var header =
         'content-disposition: form-data; name="${_browserEncode(name)}"';
-    if (!isPlainAscii(value)) {
+    if (fieldContentTypes.containsKey(name)) {
+      header = '$header\r\n'
+          'content-type: ${fieldContentTypes[name]}';
+    } else if (!isPlainAscii(value)) {
       header = '$header\r\n'
           'content-type: text/plain; charset=utf-8\r\n'
           'content-transfer-encoding: binary';
