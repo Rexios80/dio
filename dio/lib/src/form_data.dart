@@ -29,7 +29,7 @@ class FormData {
   /// The content-types of individual form fields
   /// 
   /// Map of field name to content-type
-  final Map<String, MediaType> fieldContentTypes;
+  final Map<String, String> fieldContentTypes;
 
   /// The [files].
   final files = <MapEntry<String, MultipartFile>>[];
